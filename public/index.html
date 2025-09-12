@@ -1,0 +1,288 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>YouTube Converter - Educational Demo</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <meta name="description" content="Educational YouTube to MP3/MP4 converter demo - For learning purposes only">
+    <meta name="robots" content="noindex, nofollow">
+</head>
+<body>
+    <!-- Legal Disclaimer Banner -->
+    <div class="legal-banner" id="legalBanner">
+        <div class="container">
+            <div class="legal-content">
+                <span class="warning-icon">⚠️</span>
+                <div class="legal-text">
+                    <strong>Educational Demo Only</strong> - This tool is for educational and demonstration purposes. 
+                    Do not use to download copyrighted content without proper authorization.
+                </div>
+                <button class="close-banner" onclick="closeLegalBanner()" aria-label="Close banner">×</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="container">
+        <!-- Header -->
+        <header class="header">
+            <div class="brand">
+                <div class="brand-icon">🎵</div>
+                <div class="brand-text">
+                    <h1>YouTube Converter</h1>
+                    <p>Educational Demo</p>
+                </div>
+            </div>
+        </header>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <!-- Converter Card -->
+            <div class="converter-card" id="converterCard">
+                <div class="card-header">
+                    <h2>Convert YouTube Videos</h2>
+                    <p>Download videos as MP3 audio or MP4 video files</p>
+                </div>
+
+                <!-- Video Preview (hidden initially) -->
+                <div class="video-preview hidden" id="videoPreview">
+                    <div class="preview-content">
+                        <img class="thumbnail" id="thumbnailImg" src="" alt="Video thumbnail">
+                        <div class="video-info">
+                            <h3 class="video-title" id="videoTitle"></h3>
+                            <div class="video-meta">
+                                <span class="uploader" id="videoUploader"></span>
+                                <span class="duration" id="videoDuration"></span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Converter Form -->
+                <form class="converter-form" id="converterForm">
+                    <div class="input-group">
+                        <label for="youtubeUrl" class="input-label">YouTube URL</label>
+                        <div class="input-wrapper">
+                            <input 
+                                type="url" 
+                                id="youtubeUrl" 
+                                class="url-input" 
+                                placeholder="https://www.youtube.com/watch?v=..."
+                                required
+                                aria-describedby="url-help"
+                            >
+                            <button type="button" class="preview-btn" id="previewBtn" aria-label="Preview video">
+                                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <path d="M15 12a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z"></path>
+                                    <path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"></path>
+                                </svg>
+                            </button>
+                        </div>
+                        <small id="url-help" class="input-help">Paste a YouTube video URL to get started</small>
+                    </div>
+
+                    <div class="format-selection">
+                        <div class="format-group">
+                            <label class="format-label">Output Format</label>
+                            <div class="format-options">
+                                <label class="format-option">
+                                    <input type="radio" name="format" value="mp3" checked>
+                                    <div class="option-content">
+                                        <div class="option-icon">🎵</div>
+                                        <div class="option-text">
+                                            <strong>MP3 Audio</strong>
+                                            <small>Music and audio content</small>
+                                        </div>
+                                    </div>
+                                </label>
+                                <label class="format-option">
+                                    <input type="radio" name="format" value="mp4">
+                                    <div class="option-content">
+                                        <div class="option-icon">🎬</div>
+                                        <div class="option-text">
+                                            <strong>MP4 Video</strong>
+                                            <small>Full video with audio</small>
+                                        </div>
+                                    </div>
+                                </label>
+                            </div>
+                        </div>
+
+                        <!-- Quality Selection for MP4 -->
+                        <div class="quality-group hidden" id="qualityGroup">
+                            <label class="quality-label">Video Quality</label>
+                            <select class="quality-select" id="qualitySelect">
+                                <option value="720p">720p HD (Recommended)</option>
+                                <option value="1080p">1080p Full HD</option>
+                                <option value="360p">360p (Smaller file)</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <!-- Legal Agreement -->
+                    <div class="legal-agreement">
+                        <label class="checkbox-wrapper">
+                            <input type="checkbox" id="legalConsent" required>
+                            <div class="checkbox-custom"></div>
+                            <div class="agreement-text">
+                                I confirm that I have the legal right to download this content, or the content is in the public domain. 
+                                <strong>I will not use this tool to download copyrighted material without permission.</strong>
+                            </div>
+                        </label>
+                    </div>
+
+                    <!-- Convert Button -->
+                    <button type="submit" class="convert-btn" id="convertBtn">
+                        <span class="btn-text">Convert & Download</span>
+                        <div class="btn-icon">⬇</div>
+                    </button>
+                </form>
+
+                <!-- Progress Section -->
+                <div class="progress-section hidden" id="progressSection">
+                    <div class="progress-header">
+                        <h3>Converting Your Video</h3>
+                        <p class="progress-text" id="progressText">Preparing conversion...</p>
+                    </div>
+                    
+                    <div class="progress-bar-container">
+                        <div class="progress-bar">
+                            <div class="progress-fill" id="progressFill"></div>
+                        </div>
+                        <span class="progress-percentage" id="progressPercentage">0%</span>
+                    </div>
+
+                    <div class="loading-dots">
+                        <span></span>
+                        <span></span>
+                        <span></span>
+                    </div>
+                </div>
+
+                <!-- Download Section -->
+                <div class="download-section hidden" id="downloadSection">
+                    <div class="download-header">
+                        <div class="success-icon">✅</div>
+                        <h3>Conversion Complete!</h3>
+                        <p>Your file is ready for download</p>
+                    </div>
+                    
+                    <div class="download-actions">
+                        <button class="download-btn" id="downloadBtn">
+                            <span class="btn-text">Download File</span>
+                            <div class="btn-icon">📥</div>
+                        </button>
+                        
+                        <button class="next-btn" id="nextBtn">
+                            <span class="btn-text">Convert Another</span>
+                            <div class="btn-icon">🔄</div>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Error Section -->
+                <div class="error-section hidden" id="errorSection">
+                    <div class="error-header">
+                        <div class="error-icon">❌</div>
+                        <h3>Conversion Failed</h3>
+                        <p class="error-message" id="errorMessage">Something went wrong during conversion.</p>
+                    </div>
+                    
+                    <div class="error-actions">
+                        <button class="retry-btn" id="retryBtn">
+                            <span class="btn-text">Try Again</span>
+                            <div class="btn-icon">🔄</div>
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- How It Works Section -->
+            <div class="info-section">
+                <details class="how-it-works">
+                    <summary class="how-it-works-header">
+                        <h3>How It Works</h3>
+                        <span class="expand-icon">+</span>
+                    </summary>
+                    <div class="how-it-works-content">
+                        <div class="steps">
+                            <div class="step">
+                                <div class="step-number">1</div>
+                                <div class="step-content">
+                                    <h4>Paste URL</h4>
+                                    <p>Enter a YouTube video URL in the input field above</p>
+                                </div>
+                            </div>
+                            <div class="step">
+                                <div class="step-number">2</div>
+                                <div class="step-content">
+                                    <h4>Choose Format</h4>
+                                    <p>Select MP3 for audio only or MP4 for video with audio</p>
+                                </div>
+                            </div>
+                            <div class="step">
+                                <div class="step-number">3</div>
+                                <div class="step-content">
+                                    <h4>Legal Consent</h4>
+                                    <p>Confirm you have permission to download the content</p>
+                                </div>
+                            </div>
+                            <div class="step">
+                                <div class="step-number">4</div>
+                                <div class="step-content">
+                                    <h4>Download</h4>
+                                    <p>Click convert and wait for your file to be processed</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </details>
+
+                <!-- Legal Notice -->
+                <div class="legal-notice">
+                    <h4>⚠️ Important Legal Notice</h4>
+                    <ul>
+                        <li>This tool is for <strong>educational and demonstration purposes only</strong></li>
+                        <li>Only download content you own or that is in the public domain</li>
+                        <li>Respect copyright laws and YouTube's Terms of Service</li>
+                        <li>This tool does not bypass DRM or access restricted content</li>
+                        <li>Use responsibly and at your own risk</li>
+                    </ul>
+                </div>
+            </div>
+        </main>
+
+        <!-- Footer -->
+        <footer class="footer">
+            <p>&copy; 2025 YouTube Converter Demo. Educational use only.</p>
+            <p>Built with ❤️ for learning purposes. Not affiliated with YouTube.</p>
+        </footer>
+    </div>
+
+    <!-- Legal Consent Modal -->
+    <div class="modal-overlay hidden" id="modalOverlay">
+        <div class="modal" role="dialog" aria-labelledby="modal-title" aria-describedby="modal-description">
+            <div class="modal-header">
+                <h3 id="modal-title">Legal Consent Required</h3>
+                <button class="modal-close" onclick="closeModal()" aria-label="Close modal">×</button>
+            </div>
+            <div class="modal-body">
+                <p id="modal-description">
+                    Please confirm that you have the legal right to download this content by checking the agreement checkbox below the format selection.
+                </p>
+                <p>
+                    <strong>This tool is for educational purposes only.</strong> Do not use it to download copyrighted content without proper authorization.
+                </p>
+            </div>
+            <div class="modal-footer">
+                <button class="modal-btn primary" onclick="closeModal()">I Understand</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="app.js"></script>
+</body>
+</html>
