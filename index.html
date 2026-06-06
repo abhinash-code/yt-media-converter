@@ -1,1527 +1,500 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" class="dark">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AudioMint — Video to MP3 Converter</title>
-    <meta name="description" content="Convert video to high-quality MP3 audio directly in your browser. Fast, private, and free. No uploads to any server.">
+    <title>AudioMint | Premium Video to Audio Converter</title>
+    
+    <!-- Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
-    <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 40 40'%3E%3Crect width='40' height='40' rx='10' fill='%2300e5a0'/%3E%3Crect x='11' y='20' width='4' height='10' rx='2' fill='white'/%3E%3Crect x='18' y='14' width='4' height='16' rx='2' fill='white'/%3E%3Crect x='25' y='17' width='4' height='13' rx='2' fill='white'/%3E%3C/svg%3E">
-    <style>
-        :root {
-            --bg-deep: #06060f;
-            --bg-surface: #0d0d1c;
-            --bg-card: rgba(20, 20, 40, 0.55);
-            --bg-card-hover: rgba(25, 25, 50, 0.65);
-            --border-subtle: rgba(255, 255, 255, 0.07);
-            --border-glow: rgba(0, 229, 160, 0.35);
-            --text-primary: #f0f0f5;
-            --text-secondary: #a5a5c0;
-            --text-muted: #6b6b85;
-            --mint: #00e5a0;
-            --mint-dark: #00b87a;
-            --mint-glow: rgba(0, 229, 160, 0.3);
-            --mint-soft: rgba(0, 229, 160, 0.08);
-            --purple: #8b6cf8;
-            --purple-glow: rgba(139, 108, 248, 0.25);
-            --danger: #ff4d6a;
-            --danger-soft: rgba(255, 77, 106, 0.12);
-            --radius-sm: 12px;
-            --radius-md: 18px;
-            --radius-lg: 24px;
-            --radius-xl: 30px;
-            --shadow-card: 0 2px 24px rgba(0, 0, 0, 0.4), 0 0 0 1px rgba(255, 255, 255, 0.04) inset;
-            --shadow-glow-mint: 0 0 40px rgba(0, 229, 160, 0.2), 0 0 80px rgba(0, 229, 160, 0.06);
-            --shadow-glow-purple: 0 0 40px rgba(139, 108, 248, 0.18), 0 0 80px rgba(139, 108, 248, 0.05);
-            --transition-fast: 0.15s cubic-bezier(0.4, 0, 0.2, 1);
-            --transition-smooth: 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-            --transition-bounce: 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
-            --font-stack: 'Inter', 'SF Pro Display', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-        }
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- FFmpeg WASM -->
+    <script src="https://cdn.jsdelivr.net/npm/@ffmpeg/ffmpeg@0.11.6/dist/ffmpeg.min.js"></script>
 
-        *,
-        *::before,
-        *::after {
-            box-sizing: border-box;
-            margin: 0;
-            padding: 0;
-        }
-
-        html {
-            scroll-behavior: smooth;
-            -webkit-tap-highlight-color: transparent;
-            -webkit-font-smoothing: antialiased;
-            -moz-osx-font-smoothing: grayscale;
-        }
-
-        body {
-            font-family: var(--font-stack);
-            background: var(--bg-deep);
-            color: var(--text-primary);
-            min-height: 100vh;
-            overflow-x: hidden;
-            line-height: 1.6;
-            position: relative;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-        }
-
-        /* Ambient background blobs */
-        .bg-ambient {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            pointer-events: none;
-            z-index: 0;
-            overflow: hidden;
-        }
-        .bg-blob {
-            position: absolute;
-            border-radius: 50%;
-            filter: blur(100px);
-            opacity: 0.35;
-            animation: blobFloat 18s ease-in-out infinite;
-        }
-        .bg-blob--1 {
-            width: 500px;
-            height: 500px;
-            background: radial-gradient(circle, rgba(0, 229, 160, 0.25) 0%, transparent 70%);
-            top: -15%;
-            left: -10%;
-            animation-delay: 0s;
-        }
-        .bg-blob--2 {
-            width: 400px;
-            height: 400px;
-            background: radial-gradient(circle, rgba(139, 108, 248, 0.22) 0%, transparent 70%);
-            top: 50%;
-            right: -12%;
-            animation-delay: -6s;
-        }
-        .bg-blob--3 {
-            width: 350px;
-            height: 350px;
-            background: radial-gradient(circle, rgba(0, 229, 160, 0.18) 0%, transparent 70%);
-            bottom: -8%;
-            left: 25%;
-            animation-delay: -12s;
-        }
-        @keyframes blobFloat {
-            0%,
-            100% {
-                transform: translate(0, 0) scale(1);
-            }
-            25% {
-                transform: translate(60px, -40px) scale(1.08);
-            }
-            50% {
-                transform: translate(-20px, 30px) scale(0.94);
-            }
-            75% {
-                transform: translate(-50px, -25px) scale(1.05);
-            }
-        }
-
-        /* Subtle grid texture overlay */
-        .bg-grid {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            pointer-events: none;
-            z-index: 0;
-            opacity: 0.025;
-            background-image:
-                linear-gradient(rgba(255, 255, 255, 0.4) 1px, transparent 1px),
-                linear-gradient(90deg, rgba(255, 255, 255, 0.4) 1px, transparent 1px);
-            background-size: 50px 50px;
-            mask-image: radial-gradient(ellipse 70% 60% at 50% 40%, black 30%, transparent 70%);
-            -webkit-mask-image: radial-gradient(ellipse 70% 60% at 50% 40%, black 30%, transparent 70%);
-        }
-
-        /* Main container */
-        .app-container {
-            position: relative;
-            z-index: 1;
-            width: 100%;
-            max-width: 680px;
-            padding: 20px 20px 40px;
-            display: flex;
-            flex-direction: column;
-            gap: 28px;
-        }
-
-        /* ── HEADER ── */
-        .header {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 12px;
-            padding: 16px 0 4px;
-        }
-        .header__logo-svg {
-            width: 42px;
-            height: 42px;
-            flex-shrink: 0;
-            filter: drop-shadow(0 0 16px var(--mint-glow));
-            transition: filter var(--transition-smooth);
-        }
-        .header:hover .header__logo-svg {
-            filter: drop-shadow(0 0 24px rgba(0, 229, 160, 0.5));
-        }
-        .header__brand {
-            font-size: 1.7rem;
-            font-weight: 800;
-            letter-spacing: -0.03em;
-            background: linear-gradient(135deg, #00e5a0 0%, #00c78c 40%, #7c5cfc 100%);
-            -webkit-background-clip: text;
-            background-clip: text;
-            -webkit-text-fill-color: transparent;
-            color: transparent;
-            line-height: 1;
-        }
-
-        /* ── HERO ── */
-        .hero {
-            text-align: center;
-            padding: 8px 0 0;
-        }
-        .hero__title {
-            font-size: 2.2rem;
-            font-weight: 800;
-            letter-spacing: -0.03em;
-            line-height: 1.2;
-            margin-bottom: 8px;
-            color: #fff;
-        }
-        .hero__subtitle {
-            font-size: 1.05rem;
-            color: var(--text-secondary);
-            font-weight: 400;
-            max-width: 420px;
-            margin: 0 auto;
-            letter-spacing: -0.01em;
-        }
-
-        /* ── CARD BASE ── */
-        .card {
-            background: var(--bg-card);
-            border: 1px solid var(--border-subtle);
-            border-radius: var(--radius-lg);
-            padding: 28px 24px;
-            backdrop-filter: blur(24px);
-            -webkit-backdrop-filter: blur(24px);
-            box-shadow: var(--shadow-card);
-            transition: border-color var(--transition-smooth), box-shadow var(--transition-smooth), background var(--transition-smooth);
-        }
-        .card--glow:hover {
-            border-color: rgba(255, 255, 255, 0.13);
-            box-shadow: var(--shadow-card), var(--shadow-glow-mint);
-        }
-
-        /* ── UPLOAD AREA ── */
-        .upload-zone {
-            position: relative;
-            cursor: pointer;
-            text-align: center;
-            padding: 40px 24px 36px;
-            border: 2px dashed rgba(255, 255, 255, 0.15);
-            border-radius: var(--radius-lg);
-            background: rgba(20, 20, 42, 0.4);
-            backdrop-filter: blur(20px);
-            -webkit-backdrop-filter: blur(20px);
-            transition: all var(--transition-smooth);
-            overflow: hidden;
-            user-select: none;
-            -webkit-user-select: none;
-        }
-        .upload-zone::before {
-            content: '';
-            position: absolute;
-            inset: 0;
-            border-radius: inherit;
-            background: radial-gradient(ellipse at center, var(--mint-soft) 0%, transparent 70%);
-            opacity: 0;
-            transition: opacity var(--transition-smooth);
-            pointer-events: none;
-        }
-        .upload-zone:hover {
-            border-color: rgba(0, 229, 160, 0.4);
-            background: rgba(22, 22, 48, 0.55);
-            box-shadow: var(--shadow-glow-mint);
-        }
-        .upload-zone:hover::before {
-            opacity: 0.7;
-        }
-        .upload-zone.drag-over {
-            border-color: var(--mint);
-            background: rgba(0, 229, 160, 0.06);
-            box-shadow: var(--shadow-glow-mint), 0 0 0 8px rgba(0, 229, 160, 0.04);
-            transform: scale(1.01);
-            border-style: solid;
-        }
-        .upload-zone__icon {
-            width: 56px;
-            height: 56px;
-            margin: 0 auto 16px;
-            color: var(--mint);
-            transition: transform var(--transition-bounce);
-            pointer-events: none;
-        }
-        .upload-zone:hover .upload-zone__icon {
-            transform: translateY(-4px);
-        }
-        .upload-zone.drag-over .upload-zone__icon {
-            transform: translateY(-6px) scale(1.08);
-        }
-        .upload-zone__title {
-            font-size: 1.15rem;
-            font-weight: 600;
-            margin-bottom: 4px;
-            pointer-events: none;
-            letter-spacing: -0.01em;
-        }
-        .upload-zone__hint {
-            font-size: 0.9rem;
-            color: var(--text-muted);
-            pointer-events: none;
-            margin-bottom: 16px;
-        }
-        .upload-zone__divider {
-            display: flex;
-            align-items: center;
-            gap: 12px;
-            margin: 0 auto 16px;
-            max-width: 200px;
-            pointer-events: none;
-        }
-        .upload-zone__divider-line {
-            flex: 1;
-            height: 1px;
-            background: rgba(255, 255, 255, 0.12);
-        }
-        .upload-zone__divider-text {
-            font-size: 0.8rem;
-            color: var(--text-muted);
-            text-transform: uppercase;
-            letter-spacing: 0.06em;
-            font-weight: 500;
-        }
-        .upload-zone__input {
-            display: none;
-        }
-        .btn {
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-            gap: 8px;
-            padding: 12px 24px;
-            border-radius: var(--radius-sm);
-            font-family: var(--font-stack);
-            font-weight: 600;
-            font-size: 0.95rem;
-            letter-spacing: -0.01em;
-            cursor: pointer;
-            border: none;
-            transition: all var(--transition-fast);
-            position: relative;
-            white-space: nowrap;
-            text-decoration: none;
-            outline: none;
-            -webkit-tap-highlight-color: transparent;
-            user-select: none;
-            -webkit-user-select: none;
-        }
-        .btn:active {
-            transform: scale(0.96);
-        }
-        .btn--primary {
-            background: linear-gradient(135deg, #00e5a0 0%, #00c78c 100%);
-            color: #000;
-            box-shadow: 0 4px 20px rgba(0, 229, 160, 0.3);
-            font-weight: 700;
-        }
-        .btn--primary:hover {
-            box-shadow: 0 6px 28px rgba(0, 229, 160, 0.45);
-            transform: translateY(-1px);
-        }
-        .btn--primary:active {
-            box-shadow: 0 2px 12px rgba(0, 229, 160, 0.3);
-            transform: scale(0.96);
-        }
-        .btn--primary:disabled {
-            opacity: 0.45;
-            cursor: not-allowed;
-            pointer-events: none;
-            filter: grayscale(20%);
-        }
-        .btn--ghost {
-            background: rgba(255, 255, 255, 0.04);
-            color: var(--text-primary);
-            border: 1px solid rgba(255, 255, 255, 0.15);
-        }
-        .btn--ghost:hover {
-            background: rgba(255, 255, 255, 0.08);
-            border-color: rgba(255, 255, 255, 0.25);
-        }
-        .btn--danger-ghost {
-            background: var(--danger-soft);
-            color: var(--danger);
-            border: 1px solid transparent;
-            font-weight: 500;
-        }
-        .btn--danger-ghost:hover {
-            background: rgba(255, 77, 106, 0.2);
-            border-color: rgba(255, 77, 106, 0.3);
-        }
-        .btn--lg {
-            padding: 15px 32px;
-            font-size: 1.05rem;
-            border-radius: var(--radius-md);
-        }
-        .btn--icon-only {
-            width: 40px;
-            height: 40px;
-            padding: 0;
-            border-radius: 50%;
-            flex-shrink: 0;
-        }
-        .btn__spinner {
-            width: 18px;
-            height: 18px;
-            border: 2px solid rgba(0, 0, 0, 0.25);
-            border-top-color: #000;
-            border-radius: 50%;
-            animation: spin 0.7s linear infinite;
-            flex-shrink: 0;
-        }
-        @keyframes spin {
-            to {
-                transform: rotate(360deg);
-            }
-        }
-
-        /* ── FILE INFO CARD ── */
-        .file-info {
-            display: flex;
-            align-items: center;
-            gap: 14px;
-            padding: 16px 18px;
-            background: var(--bg-card);
-            border: 1px solid var(--border-subtle);
-            border-radius: var(--radius-md);
-            backdrop-filter: blur(20px);
-            -webkit-backdrop-filter: blur(20px);
-            animation: fadeSlideIn 0.35s cubic-bezier(0.34, 1.56, 0.64, 1);
-        }
-        .file-info__icon {
-            width: 44px;
-            height: 44px;
-            flex-shrink: 0;
-            color: var(--mint);
-            background: var(--mint-soft);
-            border-radius: var(--radius-sm);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            padding: 10px;
-        }
-        .file-info__details {
-            flex: 1;
-            min-width: 0;
-        }
-        .file-info__name {
-            font-weight: 600;
-            font-size: 0.95rem;
-            letter-spacing: -0.01em;
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
-            color: var(--text-primary);
-        }
-        .file-info__meta {
-            font-size: 0.8rem;
-            color: var(--text-muted);
-            margin-top: 2px;
-        }
-        .file-info__remove {
-            flex-shrink: 0;
-            width: 34px;
-            height: 34px;
-            border-radius: 50%;
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            background: rgba(255, 255, 255, 0.03);
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            transition: all var(--transition-fast);
-            color: var(--text-muted);
-            -webkit-tap-highlight-color: transparent;
-        }
-        .file-info__remove:hover {
-            background: var(--danger-soft);
-            border-color: rgba(255, 77, 106, 0.35);
-            color: var(--danger);
-        }
-        @keyframes fadeSlideIn {
-            from {
-                opacity: 0;
-                transform: translateY(12px);
-            }
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
-        }
-
-        /* ── PROGRESS ── */
-        .progress-panel {
-            animation: fadeSlideIn 0.35s cubic-bezier(0.34, 1.56, 0.64, 1);
-        }
-        .progress-panel__status {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            margin-bottom: 14px;
-            font-weight: 500;
-            font-size: 0.95rem;
-            letter-spacing: -0.01em;
-        }
-        .progress-panel__status-dot {
-            width: 8px;
-            height: 8px;
-            border-radius: 50%;
-            background: var(--mint);
-            animation: pulseDot 1.2s ease-in-out infinite;
-        }
-        @keyframes pulseDot {
-            0%,
-            100% {
-                box-shadow: 0 0 0 0 rgba(0, 229, 160, 0.6);
-            }
-            50% {
-                box-shadow: 0 0 0 10px rgba(0, 229, 160, 0);
-            }
-        }
-        .progress-bar__track {
-            width: 100%;
-            height: 8px;
-            background: rgba(255, 255, 255, 0.06);
-            border-radius: 20px;
-            overflow: hidden;
-            position: relative;
-        }
-        .progress-bar__fill {
-            height: 100%;
-            border-radius: 20px;
-            background: linear-gradient(90deg, #00e5a0 0%, #00c78c 60%, #7c5cfc 100%);
-            background-size: 200% 100%;
-            transition: width 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-            animation: shimmer 2s linear infinite;
-            width: 0%;
-        }
-        @keyframes shimmer {
-            0% {
-                background-position: 200% 0;
-            }
-            100% {
-                background-position: -200% 0;
-            }
-        }
-        .progress-bar__text {
-            text-align: right;
-            font-size: 0.8rem;
-            color: var(--text-muted);
-            margin-top: 6px;
-            font-variant-numeric: tabular-nums;
-            font-family: 'SF Mono', 'Fira Code', 'JetBrains Mono', monospace;
-            letter-spacing: 0.02em;
-        }
-
-        /* ── SUCCESS / DOWNLOAD ── */
-        .success-panel {
-            text-align: center;
-            animation: fadeSlideIn 0.45s cubic-bezier(0.34, 1.56, 0.64, 1);
-            padding: 20px 0 8px;
-        }
-        .success-panel__check {
-            width: 60px;
-            height: 60px;
-            margin: 0 auto 12px;
-            color: var(--mint);
-            animation: popIn 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
-        }
-        @keyframes popIn {
-            0% {
-                transform: scale(0);
-                opacity: 0;
-            }
-            70% {
-                transform: scale(1.15);
-                opacity: 1;
-            }
-            100% {
-                transform: scale(1);
-                opacity: 1;
-            }
-        }
-        .success-panel__title {
-            font-size: 1.3rem;
-            font-weight: 700;
-            letter-spacing: -0.02em;
-            margin-bottom: 4px;
-        }
-        .success-panel__meta {
-            font-size: 0.85rem;
-            color: var(--text-muted);
-            margin-bottom: 18px;
-        }
-        .success-panel__actions {
-            display: flex;
-            gap: 10px;
-            justify-content: center;
-            flex-wrap: wrap;
-        }
-        .audio-preview {
-            margin-top: 16px;
-            width: 100%;
-            max-width: 360px;
-            margin-left: auto;
-            margin-right: auto;
-        }
-        .audio-preview audio {
-            width: 100%;
-            border-radius: 30px;
-            height: 42px;
-        }
-        .audio-preview audio::-webkit-media-controls-panel {
-            background: rgba(30, 30, 50, 0.8);
-        }
-
-        /* ── ERROR ── */
-        .error-banner {
-            display: flex;
-            align-items: flex-start;
-            gap: 12px;
-            padding: 16px 18px;
-            background: var(--danger-soft);
-            border: 1px solid rgba(255, 77, 106, 0.3);
-            border-radius: var(--radius-md);
-            color: var(--danger);
-            font-weight: 500;
-            font-size: 0.9rem;
-            animation: fadeSlideIn 0.3s ease;
-            letter-spacing: -0.01em;
-        }
-        .error-banner__icon {
-            flex-shrink: 0;
-            width: 20px;
-            height: 20px;
-            margin-top: 1px;
-        }
-
-        /* ── FEATURES ── */
-        .section-label {
-            font-size: 0.75rem;
-            text-transform: uppercase;
-            letter-spacing: 0.1em;
-            color: var(--mint);
-            font-weight: 700;
-            margin-bottom: 6px;
-        }
-        .section-title {
-            font-size: 1.5rem;
-            font-weight: 700;
-            letter-spacing: -0.02em;
-            margin-bottom: 20px;
-            line-height: 1.3;
-        }
-        .features-grid {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 14px;
-        }
-        .feature-card {
-            background: var(--bg-card);
-            border: 1px solid var(--border-subtle);
-            border-radius: var(--radius-md);
-            padding: 22px 18px;
-            backdrop-filter: blur(20px);
-            -webkit-backdrop-filter: blur(20px);
-            transition: all var(--transition-smooth);
-            display: flex;
-            flex-direction: column;
-            gap: 10px;
-        }
-        .feature-card:hover {
-            border-color: rgba(255, 255, 255, 0.15);
-            background: var(--bg-card-hover);
-            transform: translateY(-2px);
-            box-shadow: var(--shadow-glow-purple);
-        }
-        .feature-card__icon {
-            width: 36px;
-            height: 36px;
-            color: var(--purple);
-            flex-shrink: 0;
-        }
-        .feature-card__title {
-            font-weight: 600;
-            font-size: 0.95rem;
-            letter-spacing: -0.01em;
-        }
-        .feature-card__desc {
-            font-size: 0.82rem;
-            color: var(--text-muted);
-            line-height: 1.5;
-        }
-
-        /* ── HOW IT WORKS ── */
-        .steps-row {
-            display: flex;
-            gap: 16px;
-            counter-reset: step;
-        }
-        .step-item {
-            flex: 1;
-            text-align: center;
-            position: relative;
-        }
-        .step-item::before {
-            counter-increment: step;
-            content: counter(step);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            width: 40px;
-            height: 40px;
-            border-radius: 50%;
-            background: linear-gradient(135deg, #00e5a0, #00c78c);
-            color: #000;
-            font-weight: 700;
-            font-size: 1rem;
-            margin: 0 auto 10px;
-            box-shadow: 0 4px 16px rgba(0, 229, 160, 0.3);
-        }
-        .step-item__title {
-            font-weight: 600;
-            font-size: 0.9rem;
-            letter-spacing: -0.01em;
-            margin-bottom: 2px;
-        }
-        .step-item__desc {
-            font-size: 0.78rem;
-            color: var(--text-muted);
-            line-height: 1.4;
-        }
-        .steps-connector {
-            display: none;
-        }
-
-        /* ── PRIVACY NOTE ── */
-        .privacy-badge {
-            display: inline-flex;
-            align-items: center;
-            gap: 8px;
-            padding: 10px 16px;
-            border-radius: 30px;
-            background: rgba(0, 229, 160, 0.06);
-            border: 1px solid rgba(0, 229, 160, 0.2);
-            font-size: 0.82rem;
-            font-weight: 500;
-            color: var(--mint);
-            letter-spacing: -0.01em;
-            margin: 0 auto;
-        }
-        .privacy-badge__icon {
-            width: 18px;
-            height: 18px;
-            flex-shrink: 0;
-        }
-
-        /* ── FOOTER ── */
-        .footer {
-            text-align: center;
-            padding: 20px 0 10px;
-            color: var(--text-muted);
-            font-size: 0.8rem;
-            letter-spacing: -0.01em;
-        }
-        .footer__brand {
-            display: inline-flex;
-            align-items: center;
-            gap: 6px;
-            font-weight: 700;
-            color: var(--text-secondary);
-            margin-bottom: 4px;
-            font-size: 0.9rem;
-        }
-        .footer__brand svg {
-            width: 20px;
-            height: 20px;
-        }
-
-        /* ── RESPONSIVE ── */
-        @media (max-width: 600px) {
-            .app-container {
-                padding: 14px 14px 32px;
-                gap: 20px;
-            }
-            .hero__title {
-                font-size: 1.6rem;
-            }
-            .hero__subtitle {
-                font-size: 0.9rem;
-            }
-            .features-grid {
-                grid-template-columns: 1fr;
-                gap: 10px;
-            }
-            .card {
-                padding: 20px 16px;
-                border-radius: var(--radius-md);
-            }
-            .upload-zone {
-                padding: 28px 16px 24px;
-            }
-            .upload-zone__title {
-                font-size: 1rem;
-            }
-            .steps-row {
-                flex-direction: column;
-                gap: 20px;
-            }
-            .btn--lg {
-                padding: 14px 24px;
-                font-size: 0.95rem;
-            }
-            .header__brand {
-                font-size: 1.4rem;
-            }
-            .header__logo-svg {
-                width: 34px;
-                height: 34px;
-            }
-            .success-panel__actions {
-                flex-direction: column;
-                align-items: center;
-            }
-            .success-panel__actions .btn {
-                width: 100%;
-                max-width: 280px;
-            }
-        }
-        @media (min-width: 601px) and (max-width: 900px) {
-            .app-container {
-                padding: 20px 28px 40px;
-            }
-            .features-grid {
-                gap: 12px;
-            }
-        }
-        @media (min-width: 901px) {
-            .app-container {
-                padding: 24px 32px 48px;
-            }
-            .hero__title {
-                font-size: 2.6rem;
-            }
-        }
-
-        /* ── UTILITY ── */
-        .hidden {
-            display: none !important;
-        }
-        .text-center {
-            text-align: center;
-        }
-        .mt-8 {
-            margin-top: 8px;
-        }
-        .mt-16 {
-            margin-top: 16px;
-        }
-        .gap-12 {
-            gap: 12px;
-        }
-        .flex-center {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
-
-        /* Smooth page entrance */
-        .app-container {
-            animation: pageEnter 0.6s cubic-bezier(0.22, 1, 0.36, 1);
-        }
-        @keyframes pageEnter {
-            from {
-                opacity: 0;
-                transform: translateY(16px);
-            }
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
-        }
-
-        /* FFmpeg loading indicator */
-        .engine-status {
-            display: inline-flex;
-            align-items: center;
-            gap: 7px;
-            font-size: 0.78rem;
-            color: var(--text-muted);
-            padding: 6px 12px;
-            border-radius: 20px;
-            background: rgba(255, 255, 255, 0.03);
-            border: 1px solid rgba(255, 255, 255, 0.06);
-            letter-spacing: -0.01em;
-        }
-        .engine-status__dot {
-            width: 6px;
-            height: 6px;
-            border-radius: 50%;
-            background: #f0a030;
-            animation: pulseDot 1.5s ease-in-out infinite;
-        }
-        .engine-status--ready .engine-status__dot {
-            background: var(--mint);
-            animation: none;
-            box-shadow: 0 0 6px var(--mint-glow);
-        }
-    </style>
-</head>
-<body>
-
-    <!-- Ambient background -->
-    <div class="bg-ambient" aria-hidden="true">
-        <div class="bg-blob bg-blob--1"></div>
-        <div class="bg-blob bg-blob--2"></div>
-        <div class="bg-blob bg-blob--3"></div>
-    </div>
-    <div class="bg-grid" aria-hidden="true"></div>
-
-    <!-- App Container -->
-    <main class="app-container" id="appContainer">
-
-        <!-- Header -->
-        <header class="header">
-            <!-- Inline SVG Logo: sound wave in a rounded square -->
-            <svg class="header__logo-svg" viewBox="0 0 44 44" fill="none" xmlns="http://www.w3.org/2000/svg" aria-label="AudioMint logo">
-                <rect width="44" height="44" rx="12" fill="url(#logoGrad)" />
-                <defs>
-                    <linearGradient id="logoGrad" x1="0" y1="0" x2="44" y2="44" gradientUnits="userSpaceOnUse">
-                        <stop stop-color="#00e5a0" />
-                        <stop offset="1" stop-color="#00b87a" />
-                    </linearGradient>
-                </defs>
-                <rect x="12" y="20" width="4" height="12" rx="2" fill="white" opacity="0.9" />
-                <rect x="20" y="13" width="4" height="24" rx="2" fill="white" />
-                <rect x="28" y="17" width="4" height="18" rx="2" fill="white" opacity="0.85" />
-            </svg>
-            <span class="header__brand">AudioMint</span>
-        </header>
-
-        <!-- Hero -->
-        <section class="hero">
-            <h1 class="hero__title">Video to MP3,<br>instantly in your browser.</h1>
-            <p class="hero__subtitle">Extract high-quality audio from any video file. No uploads, no servers — everything runs locally on your device.</p>
-            <div class="flex-center mt-16">
-                <span class="engine-status" id="engineStatus">
-                    <span class="engine-status__dot"></span>
-                    <span id="engineStatusText">Preparing audio engine…</span>
-                </span>
-            </div>
-        </section>
-
-        <!-- Upload Section -->
-        <section id="uploadSection">
-            <div class="upload-zone card--glow" id="uploadZone" role="button" tabindex="0" aria-label="Upload video file">
-                <!-- Upload icon: cloud with arrow -->
-                <svg class="upload-zone__icon" viewBox="0 0 56 56" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
-                    <circle cx="28" cy="28" r="26" stroke="currentColor" stroke-width="2.5" stroke-dasharray="8 4" opacity="0.5" />
-                    <path d="M28 16v18M21 25l7-7 7 7" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" />
-                    <rect x="17" y="34" width="22" height="3" rx="1.5" fill="currentColor" opacity="0.6" />
-                </svg>
-                <p class="upload-zone__title">Drop your video here</p>
-                <p class="upload-zone__hint">or</p>
-                <button class="btn btn--primary" id="browseBtn" type="button">
-                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
-                    Browse Files
-                </button>
-                <input type="file" class="upload-zone__input" id="fileInput" accept="video/*" aria-hidden="true">
-                <p class="upload-zone__hint mt-8" style="font-size:0.75rem;color:var(--text-muted);">MP4, MOV, WebM, AVI, MKV &amp; more</p>
-            </div>
-        </section>
-
-        <!-- File Info (hidden initially) -->
-        <section id="fileInfoSection" class="hidden">
-            <div class="file-info" id="fileInfoCard">
-                <div class="file-info__icon">
-                    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><polyline points="9 3 9 21"/><polyline points="15 8 15 16"/></svg>
-                </div>
-                <div class="file-info__details">
-                    <p class="file-info__name" id="fileName">—</p>
-                    <p class="file-info__meta" id="fileMeta">—</p>
-                </div>
-                <button class="file-info__remove" id="removeFileBtn" aria-label="Remove file" title="Remove file">
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
-                </button>
-            </div>
-            <div class="text-center mt-16">
-                <button class="btn btn--primary btn--lg" id="convertBtn" type="button">
-                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polygon points="5 3 19 12 5 21 5 3"/></svg>
-                    Convert to MP3
-                </button>
-            </div>
-        </section>
-
-        <!-- Progress Section (hidden initially) -->
-        <section id="progressSection" class="hidden">
-            <div class="card progress-panel">
-                <div class="progress-panel__status">
-                    <span class="progress-panel__status-dot"></span>
-                    <span id="progressStatusText">Converting…</span>
-                </div>
-                <div class="progress-bar__track">
-                    <div class="progress-bar__fill" id="progressBarFill" style="width:0%;"></div>
-                </div>
-                <p class="progress-bar__text" id="progressPercent">0%</p>
-            </div>
-        </section>
-
-        <!-- Error Section (hidden initially) -->
-        <section id="errorSection" class="hidden">
-            <div class="error-banner" id="errorBanner">
-                <svg class="error-banner__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>
-                <span id="errorText">Something went wrong.</span>
-            </div>
-            <div class="text-center mt-16">
-                <button class="btn btn--ghost" id="retryBtn" type="button">Try Again</button>
-            </div>
-        </section>
-
-        <!-- Success / Download Section (hidden initially) -->
-        <section id="successSection" class="hidden">
-            <div class="card success-panel">
-                <svg class="success-panel__check" viewBox="0 0 60 60" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
-                    <circle cx="30" cy="30" r="28" stroke="currentColor" stroke-width="3" opacity="0.3" />
-                    <circle cx="30" cy="30" r="22" fill="currentColor" opacity="0.1" />
-                    <polyline points="18,30 27,39 42,21" stroke="currentColor" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round" />
-                </svg>
-                <h2 class="success-panel__title">Your MP3 is ready!</h2>
-                <p class="success-panel__meta" id="successMeta">—</p>
-                <div class="success-panel__actions">
-                    <button class="btn btn--primary btn--lg" id="downloadBtn" type="button">
-                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
-                        Download MP3
-                    </button>
-                    <button class="btn btn--ghost btn--lg" id="convertAnotherBtn" type="button">
-                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="1 4 1 10 7 10"/><path d="M3.5 19a9 9 0 100-14L1 10"/></svg>
-                        Convert Another
-                    </button>
-                </div>
-                <div class="audio-preview" id="audioPreview">
-                    <audio controls id="audioPlayer">
-                        Your browser does not support the audio element.
-                    </audio>
-                </div>
-            </div>
-        </section>
-
-        <!-- Features Section -->
-        <section class="mt-16">
-            <p class="section-label">Why AudioMint</p>
-            <h2 class="section-title">Built for speed, privacy,<br>and quality.</h2>
-            <div class="features-grid">
-                <div class="feature-card">
-                    <svg class="feature-card__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
-                        <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/>
-                    </svg>
-                    <h3 class="feature-card__title">Lightning Fast</h3>
-                    <p class="feature-card__desc">Powered by FFmpeg.wasm running natively in your browser. No network round-trips.</p>
-                </div>
-                <div class="feature-card">
-                    <svg class="feature-card__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
-                        <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
-                        <path d="M7 11V7a5 5 0 0110 0v4"/>
-                        <circle cx="12" cy="16" r="1"/>
-                    </svg>
-                    <h3 class="feature-card__title">100% Private</h3>
-                    <p class="feature-card__desc">Files never leave your device. All processing is done locally — zero data is ever uploaded.</p>
-                </div>
-                <div class="feature-card">
-                    <svg class="feature-card__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
-                        <rect x="5" y="2" width="14" height="20" rx="2" ry="2"/>
-                        <line x1="12" y1="18" x2="12.01" y2="18"/>
-                    </svg>
-                    <h3 class="feature-card__title">Mobile Friendly</h3>
-                    <p class="feature-card__desc">Works seamlessly on your phone or tablet. Convert videos on the go, right from your gallery.</p>
-                </div>
-                <div class="feature-card">
-                    <svg class="feature-card__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
-                        <circle cx="12" cy="12" r="10"/>
-                        <polyline points="8 12 11 15 16 9"/>
-                    </svg>
-                    <h3 class="feature-card__title">High Quality MP3</h3>
-                    <p class="feature-card__desc">Encoded at 192kbps using LAME — delivering crisp, rich audio from your video files.</p>
-                </div>
-            </div>
-        </section>
-
-        <!-- How It Works -->
-        <section class="mt-16">
-            <p class="section-label">How It Works</p>
-            <h2 class="section-title">Three simple steps.</h2>
-            <div class="steps-row">
-                <div class="step-item">
-                    <p class="step-item__title">Choose Video</p>
-                    <p class="step-item__desc">Select any video file from your device or drag &amp; drop it.</p>
-                </div>
-                <div class="step-item">
-                    <p class="step-item__title">Convert</p>
-                    <p class="step-item__desc">We extract the audio and encode it to MP3 locally.</p>
-                </div>
-                <div class="step-item">
-                    <p class="step-item__title">Download</p>
-                    <p class="step-item__desc">Save the MP3 to your device. Ready to listen anywhere.</p>
-                </div>
-            </div>
-        </section>
-
-        <!-- Privacy Badge -->
-        <div class="text-center mt-16">
-            <div class="privacy-badge">
-                <svg class="privacy-badge__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                    <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
-                    <path d="M7 11V7a5 5 0 0110 0v4"/>
-                </svg>
-                Files stay on your device — nothing is ever uploaded
-            </div>
-        </div>
-
-        <!-- Footer -->
-        <footer class="footer">
-            <div class="footer__brand">
-                <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><rect width="24" height="24" rx="6" fill="url(#footerLogoGrad)"/><defs><linearGradient id="footerLogoGrad" x1="0" y1="0" x2="24" y2="24"><stop stop-color="#00e5a0"/><stop offset="1" stop-color="#00b87a"/></linearGradient></defs><rect x="6" y="10" width="2.5" height="8" rx="1.2" fill="white"/><rect x="10.75" y="6" width="2.5" height="15" rx="1.2" fill="white"/><rect x="15.5" y="8" width="2.5" height="11" rx="1.2" fill="white" opacity="0.85"/></svg>
-                AudioMint
-            </div>
-            <p>© 2026 AudioMint. All processing happens locally in your browser.</p>
-        </footer>
-    </main>
-
-    <!-- FFmpeg.wasm Import Map -->
-    <script type="importmap">
-        {
-            "imports": {
-                "@ffmpeg/ffmpeg": "https://cdn.jsdelivr.net/npm/@ffmpeg/ffmpeg@0.12.10/dist/esm/index.js",
-                "@ffmpeg/util": "https://cdn.jsdelivr.net/npm/@ffmpeg/util@0.12.1/dist/esm/index.js"
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['"Plus Jakarta Sans"', 'sans-serif'],
+                    },
+                    colors: {
+                        mint: {
+                            400: '#34d399',
+                            500: '#10b981',
+                            600: '#059669',
+                        },
+                        dark: {
+                            900: '#0a0c10',
+                            800: '#11141a',
+                            700: '#1c212b',
+                            600: '#2d3342'
+                        }
+                    },
+                    animation: {
+                        'spin-slow': 'spin 3s linear infinite',
+                        'pulse-glow': 'pulseGlow 2s cubic-bezier(0.4, 0, 0.6, 1) infinite',
+                        'fade-in': 'fadeIn 0.4s ease-out forwards',
+                        'slide-up': 'slideUp 0.5s ease-out forwards',
+                    },
+                    keyframes: {
+                        pulseGlow: {
+                            '0%, 100%': { opacity: 0.5, transform: 'scale(1)' },
+                            '50%': { opacity: 0.8, transform: 'scale(1.05)' },
+                        },
+                        fadeIn: {
+                            '0%': { opacity: 0 },
+                            '100%': { opacity: 1 },
+                        },
+                        slideUp: {
+                            '0%': { opacity: 0, transform: 'translateY(20px)' },
+                            '100%': { opacity: 1, transform: 'translateY(0)' },
+                        }
+                    }
+                }
             }
         }
     </script>
 
-    <script type="module">
-        import {
-            FFmpeg
-        } from '@ffmpeg/ffmpeg';
-        import {
-            fetchFile,
-            toBlobURL
-        } from '@ffmpeg/util';
-
-        // ── DOM References ──
-        const uploadZone = document.getElementById('uploadZone');
-        const fileInput = document.getElementById('fileInput');
-        const browseBtn = document.getElementById('browseBtn');
-        const uploadSection = document.getElementById('uploadSection');
-        const fileInfoSection = document.getElementById('fileInfoSection');
-        const fileNameEl = document.getElementById('fileName');
-        const fileMetaEl = document.getElementById('fileMeta');
-        const removeFileBtn = document.getElementById('removeFileBtn');
-        const convertBtn = document.getElementById('convertBtn');
-        const progressSection = document.getElementById('progressSection');
-        const progressBarFill = document.getElementById('progressBarFill');
-        const progressPercent = document.getElementById('progressPercent');
-        const progressStatusText = document.getElementById('progressStatusText');
-        const errorSection = document.getElementById('errorSection');
-        const errorText = document.getElementById('errorText');
-        const retryBtn = document.getElementById('retryBtn');
-        const successSection = document.getElementById('successSection');
-        const successMeta = document.getElementById('successMeta');
-        const downloadBtn = document.getElementById('downloadBtn');
-        const convertAnotherBtn = document.getElementById('convertAnotherBtn');
-        const audioPlayer = document.getElementById('audioPlayer');
-        const audioPreview = document.getElementById('audioPreview');
-        const engineStatus = document.getElementById('engineStatus');
-        const engineStatusText = document.getElementById('engineStatusText');
-
-        // ── State ──
-        let selectedFile = null;
-        let ffmpeg = null;
-        let ffmpegReady = false;
-        let convertedBlobUrl = null;
-        let isConverting = false;
-
-        // ── Initialize FFmpeg ──
-        async function initFFmpeg() {
-            try {
-                engineStatusText.textContent = 'Preparing audio engine…';
-                engineStatus.classList.remove('engine-status--ready');
-                ffmpeg = new FFmpeg();
-
-                const baseURL = 'https://cdn.jsdelivr.net/npm/@ffmpeg/core@0.12.6/dist/umd';
-                const coreURL = await toBlobURL(`${baseURL}/ffmpeg-core.js`, 'text/javascript');
-                const wasmURL = await toBlobURL(`${baseURL}/ffmpeg-core.wasm`, 'application/wasm');
-
-                await ffmpeg.load({
-                    coreURL,
-                    wasmURL,
-                });
-
-                ffmpegReady = true;
-                engineStatusText.textContent = 'Audio engine ready';
-                engineStatus.classList.add('engine-status--ready');
-                console.log('✅ FFmpeg.wasm loaded and ready');
-            } catch (err) {
-                console.error('FFmpeg load error:', err);
-                engineStatusText.textContent = 'Audio engine unavailable — some features may not work';
-                engineStatus.querySelector('.engine-status__dot').style.background = '#ff4d6a';
-                engineStatus.querySelector('.engine-status__dot').style.animation = 'none';
-            }
+    <style>
+        body {
+            background-color: #0a0c10;
+            background-image: 
+                radial-gradient(circle at 15% 30%, rgba(16, 185, 129, 0.05) 0%, transparent 40%),
+                radial-gradient(circle at 85% 70%, rgba(59, 130, 246, 0.05) 0%, transparent 40%);
+            background-attachment: fixed;
+            color: #f8fafc;
+            -webkit-font-smoothing: antialiased;
         }
 
-        // Start loading FFmpeg immediately
-        initFFmpeg();
-
-        // ── Utility: Format file size ──
-        function formatFileSize(bytes) {
-            if (bytes === 0) return '0 bytes';
-            const k = 1024;
-            const sizes = ['bytes', 'KB', 'MB', 'GB'];
-            const i = Math.floor(Math.log(bytes) / Math.log(k));
-            const val = parseFloat((bytes / Math.pow(k, i)).toFixed(i === 0 ? 0 : 1));
-            return `${val} ${sizes[i]}`;
+        .glass-panel {
+            background: rgba(28, 33, 43, 0.4);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.1);
         }
 
-        // ── Utility: Get file type label ──
-        function getFileTypeLabel(file) {
-            const ext = file.name.split('.').pop()?.toUpperCase() || 'VIDEO';
-            const mimeMap = {
-                'video/mp4': 'MP4 Video',
-                'video/quicktime': 'MOV Video',
-                'video/webm': 'WebM Video',
-                'video/x-msvideo': 'AVI Video',
-                'video/x-matroska': 'MKV Video',
-                'video/mpeg': 'MPEG Video',
-                'video/ogg': 'OGG Video',
-                'video/3gpp': '3GP Video',
-                'video/x-flv': 'FLV Video',
-                'video/x-ms-wmv': 'WMV Video',
+        .dropzone {
+            border: 2px dashed rgba(255, 255, 255, 0.15);
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .dropzone:hover {
+            border-color: rgba(16, 185, 129, 0.5);
+            background: rgba(16, 185, 129, 0.02);
+        }
+
+        .dropzone.active {
+            border-color: #10b981;
+            background: rgba(16, 185, 129, 0.05);
+            transform: scale(1.01);
+            box-shadow: 0 0 30px rgba(16, 185, 129, 0.1);
+        }
+
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #0a0c10;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #2d3342;
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #10b981;
+        }
+
+        /* Progress Bar Stripes */
+        .progress-bar-stripes {
+            background-image: linear-gradient(
+                45deg,
+                rgba(255, 255, 255, 0.15) 25%,
+                transparent 25%,
+                transparent 50%,
+                rgba(255, 255, 255, 0.15) 50%,
+                rgba(255, 255, 255, 0.15) 75%,
+                transparent 75%,
+                transparent
+            );
+            background-size: 1rem 1rem;
+            animation: moveStripes 1s linear infinite;
+        }
+
+        @keyframes moveStripes {
+            0% { background-position: 1rem 0; }
+            100% { background-position: 0 0; }
+        }
+
+        .hide { display: none !important; }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col selection:bg-mint-500 selection:text-white">
+
+    <!-- Navbar -->
+    <nav class="w-full pt-8 pb-4 px-6 relative z-10">
+        <div class="max-w-5xl mx-auto flex items-center justify-between">
+            <div class="flex items-center gap-3">
+                <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-mint-400 to-mint-600 flex items-center justify-center shadow-lg shadow-mint-500/20">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M2 12h4l3-9 5 18 3-9h5"/>
+                    </svg>
+                </div>
+                <span class="text-2xl font-bold tracking-tight text-white">AudioMint</span>
+            </div>
+            <div class="hidden sm:flex items-center gap-2 text-sm text-gray-400">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
+                <span>100% Local Processing</span>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <main class="flex-grow flex flex-col items-center justify-center px-4 py-12 relative z-10">
+        
+        <!-- Hero Section -->
+        <div class="text-center max-w-2xl mb-10 animate-slide-up">
+            <h1 class="text-4xl md:text-6xl font-bold text-white mb-4 leading-tight">
+                Extract Audio from <br/>
+                <span class="text-transparent bg-clip-text bg-gradient-to-r from-mint-400 to-emerald-500">Video Instantly.</span>
+            </h1>
+            <p class="text-gray-400 text-lg md:text-xl">
+                Fast, secure, and private. AudioMint converts your videos to MP3 directly inside your browser. No files are ever uploaded.
+            </p>
+        </div>
+
+        <!-- App Container (Glass Card) -->
+        <div class="glass-panel rounded-3xl w-full max-w-2xl p-6 md:p-10 animate-slide-up" style="animation-delay: 0.1s;">
+            
+            <!-- View 1: Upload Zone -->
+            <div id="view-upload" class="flex flex-col">
+                <div id="dropzone" class="dropzone rounded-2xl flex flex-col items-center justify-center py-16 px-6 text-center cursor-pointer relative overflow-hidden group">
+                    <input type="file" id="file-input" class="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10" accept="video/*">
+                    
+                    <div class="w-20 h-20 bg-dark-700 rounded-full flex items-center justify-center mb-6 group-hover:bg-dark-600 transition-colors shadow-xl">
+                        <svg class="text-mint-500 w-10 h-10" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="17 8 12 3 7 8"></polyline><line x1="12" y1="3" x2="12" y2="15"></line></svg>
+                    </div>
+                    
+                    <h3 class="text-xl font-semibold text-white mb-2">Drag & Drop your video here</h3>
+                    <p class="text-gray-400 mb-6">or click to browse from your device</p>
+                    
+                    <div class="inline-flex items-center justify-center px-6 py-3 rounded-full bg-white/5 text-white font-medium border border-white/10 group-hover:border-white/20 transition-all">
+                        Select Video File
+                    </div>
+                </div>
+                
+                <div class="mt-6 flex items-center justify-center gap-4 text-sm text-gray-500">
+                    <span class="flex items-center gap-1">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>
+                        MP4, MOV, WEBM, MKV
+                    </span>
+                    <span class="w-1 h-1 rounded-full bg-gray-600"></span>
+                    <span>Up to 500MB recommended</span>
+                </div>
+            </div>
+
+            <!-- View 2: File Selected -->
+            <div id="view-selected" class="flex flex-col hide animate-fade-in">
+                <div class="bg-dark-800 border border-white/10 rounded-2xl p-6 mb-6 flex flex-col md:flex-row items-center gap-6">
+                    <div class="w-16 h-16 rounded-xl bg-dark-700 flex flex-shrink-0 items-center justify-center text-mint-500 border border-white/5">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="2" width="20" height="20" rx="2.18" ry="2.18"></rect><line x1="7" y1="2" x2="7" y2="22"></line><line x1="17" y1="2" x2="17" y2="22"></line><line x1="2" y1="12" x2="22" y2="12"></line><line x1="2" y1="7" x2="7" y2="7"></line><line x1="2" y1="17" x2="7" y2="17"></line><line x1="17" y1="17" x2="22" y2="17"></line><line x1="17" y1="7" x2="22" y2="7"></line></svg>
+                    </div>
+                    <div class="flex-grow text-center md:text-left overflow-hidden w-full">
+                        <h4 id="sel-filename" class="text-lg font-semibold text-white truncate w-full">my_vacation_video.mp4</h4>
+                        <p id="sel-filesize" class="text-sm text-gray-400 mt-1">45.2 MB • Ready to extract</p>
+                    </div>
+                    <button id="btn-remove" class="p-2 text-gray-400 hover:text-red-400 hover:bg-red-400/10 rounded-lg transition-colors flex-shrink-0" title="Remove file">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+                    </button>
+                </div>
+
+                <div class="flex flex-col sm:flex-row gap-4">
+                    <button id="btn-convert" class="flex-grow bg-mint-500 hover:bg-mint-400 text-dark-900 font-bold text-lg rounded-xl px-6 py-4 transition-all transform active:scale-[0.98] flex items-center justify-center gap-2 shadow-lg shadow-mint-500/25">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>
+                        Convert to MP3
+                    </button>
+                </div>
+            </div>
+
+            <!-- View 3: Converting -->
+            <div id="view-converting" class="flex flex-col items-center py-8 hide animate-fade-in">
+                <div class="relative w-24 h-24 mb-8">
+                    <div class="absolute inset-0 border-4 border-dark-700 rounded-full"></div>
+                    <div class="absolute inset-0 border-4 border-mint-500 rounded-full border-t-transparent animate-spin"></div>
+                    <div class="absolute inset-0 flex items-center justify-center">
+                        <svg class="w-8 h-8 text-mint-500 animate-pulse" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon><path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"></path></svg>
+                    </div>
+                </div>
+                
+                <h3 id="conv-status" class="text-xl font-semibold text-white mb-2">Extracting Audio...</h3>
+                <p id="conv-substatus" class="text-gray-400 mb-8">Please keep this tab open</p>
+
+                <div class="w-full bg-dark-800 rounded-full h-4 overflow-hidden border border-white/5 relative">
+                    <div id="conv-progress" class="bg-mint-500 h-full w-0 transition-all duration-300 ease-out progress-bar-stripes relative">
+                        <div class="absolute inset-0 bg-white/20"></div>
+                    </div>
+                </div>
+                <div class="w-full flex justify-between mt-2 text-sm font-medium">
+                    <span class="text-mint-500" id="conv-percent">0%</span>
+                    <span class="text-gray-500">Processing</span>
+                </div>
+            </div>
+
+            <!-- View 4: Success -->
+            <div id="view-success" class="flex flex-col items-center py-6 hide animate-fade-in">
+                <div class="w-20 h-20 bg-emerald-500/10 rounded-full flex items-center justify-center mb-6 relative">
+                    <div class="absolute inset-0 rounded-full bg-emerald-500/20 animate-pulse-glow"></div>
+                    <svg class="w-10 h-10 text-emerald-400 relative z-10" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                </div>
+                
+                <h3 class="text-2xl font-bold text-white mb-2">Conversion Complete!</h3>
+                <p class="text-gray-400 mb-8 text-center">Your audio file is ready. The quality has been optimized.</p>
+
+                <div class="flex flex-col sm:flex-row gap-4 w-full">
+                    <a id="btn-download" href="#" download="extracted_audio.mp3" class="flex-grow bg-mint-500 hover:bg-mint-400 text-dark-900 font-bold text-lg rounded-xl px-6 py-4 transition-all transform active:scale-[0.98] flex items-center justify-center gap-2 shadow-lg shadow-mint-500/25">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
+                        Download MP3
+                    </a>
+                    <button id="btn-reset" class="px-6 py-4 rounded-xl bg-white/5 hover:bg-white/10 text-white font-medium border border-white/10 transition-all flex items-center justify-center gap-2">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"></path><path d="M3 3v5h5"></path></svg>
+                        Convert Another
+                    </button>
+                </div>
+            </div>
+
+            <!-- Error State -->
+            <div id="view-error" class="flex flex-col items-center py-8 hide animate-fade-in text-center">
+                <div class="w-16 h-16 bg-red-500/10 rounded-full flex items-center justify-center mb-4 text-red-500">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="15" y1="9" x2="9" y2="15"></line><line x1="9" y1="9" x2="15" y2="15"></line></svg>
+                </div>
+                <h3 class="text-xl font-bold text-white mb-2">Oops, something went wrong.</h3>
+                <p id="error-message" class="text-gray-400 mb-6 text-sm max-w-md">The file format might not be supported or your browser is restricting local processing capabilities.</p>
+                <button id="btn-error-reset" class="px-6 py-3 rounded-xl bg-white/5 hover:bg-white/10 text-white font-medium border border-white/10 transition-all">
+                    Try Again
+                </button>
+            </div>
+
+        </div>
+
+        <!-- Features Grid -->
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6 max-w-5xl w-full mt-20 animate-slide-up" style="animation-delay: 0.2s;">
+            <div class="bg-dark-800/50 border border-white/5 p-6 rounded-2xl flex flex-col items-center text-center">
+                <div class="p-3 bg-mint-500/10 text-mint-400 rounded-lg mb-4">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon></svg>
+                </div>
+                <h4 class="text-lg font-semibold text-white mb-2">Lightning Fast</h4>
+                <p class="text-gray-400 text-sm">Processing happens locally on your device's CPU. No upload delays or queues.</p>
+            </div>
+            
+            <div class="bg-dark-800/50 border border-white/5 p-6 rounded-2xl flex flex-col items-center text-center">
+                <div class="p-3 bg-blue-500/10 text-blue-400 rounded-lg mb-4">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path></svg>
+                </div>
+                <h4 class="text-lg font-semibold text-white mb-2">100% Private</h4>
+                <p class="text-gray-400 text-sm">Your files never leave your device. We use WebAssembly to convert entirely offline.</p>
+            </div>
+
+            <div class="bg-dark-800/50 border border-white/5 p-6 rounded-2xl flex flex-col items-center text-center">
+                <div class="p-3 bg-purple-500/10 text-purple-400 rounded-lg mb-4">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 18v-6a9 9 0 0 1 18 0v6"></path><path d="M21 19a2 2 0 0 1-2 2h-1a2 2 0 0 1-2-2v-3a2 2 0 0 1 2-2h3zM3 19a2 2 0 0 0 2 2h1a2 2 0 0 0 2-2v-3a2 2 0 0 0-2-2H3z"></path></svg>
+                </div>
+                <h4 class="text-lg font-semibold text-white mb-2">High Quality MP3</h4>
+                <p class="text-gray-400 text-sm">Maintains superior audio fidelity. Automatically extracts at the optimal bitrate.</p>
+            </div>
+        </div>
+
+    </main>
+
+    <!-- Footer -->
+    <footer class="w-full py-8 text-center text-gray-500 text-sm border-t border-white/5 relative z-10 mt-auto">
+        <p>© 2026 AudioMint. Built for the modern web.</p>
+    </footer>
+
+    <!-- Logic -->
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            // UI Elements
+            const views = {
+                upload: document.getElementById('view-upload'),
+                selected: document.getElementById('view-selected'),
+                converting: document.getElementById('view-converting'),
+                success: document.getElementById('view-success'),
+                error: document.getElementById('view-error')
             };
-            return mimeMap[file.type] || `${ext} Video`;
-        }
 
-        // ── Show a section, hide others ──
-        function showOnly(section) {
-            [uploadSection, fileInfoSection, progressSection, errorSection, successSection].forEach(sec => {
-                if (sec) sec.classList.add('hidden');
-            });
-            if (section) section.classList.remove('hidden');
-        }
+            const els = {
+                dropzone: document.getElementById('dropzone'),
+                fileInput: document.getElementById('file-input'),
+                selFilename: document.getElementById('sel-filename'),
+                selFilesize: document.getElementById('sel-filesize'),
+                btnRemove: document.getElementById('btn-remove'),
+                btnConvert: document.getElementById('btn-convert'),
+                btnDownload: document.getElementById('btn-download'),
+                btnReset: document.getElementById('btn-reset'),
+                btnErrorReset: document.getElementById('btn-error-reset'),
+                convStatus: document.getElementById('conv-status'),
+                convSubstatus: document.getElementById('conv-substatus'),
+                convProgress: document.getElementById('conv-progress'),
+                convPercent: document.getElementById('conv-percent'),
+                errorMsg: document.getElementById('error-message')
+            };
 
-        // ── Reset to initial state ──
-        function resetState() {
-            selectedFile = null;
-            isConverting = false;
-            if (convertedBlobUrl) {
-                URL.revokeObjectURL(convertedBlobUrl);
-                convertedBlobUrl = null;
-            }
-            fileInput.value = '';
-            progressBarFill.style.width = '0%';
-            progressPercent.textContent = '0%';
-            progressStatusText.textContent = 'Converting…';
-            audioPlayer.src = '';
-            audioPreview.classList.remove('hidden');
-            showOnly(uploadSection);
-            // Clean up FFmpeg virtual FS if there are leftover files
-            if (ffmpegReady && ffmpeg) {
-                try {
-                    ffmpeg.deleteFile('input_video').catch(() => {});
-                    ffmpeg.deleteFile('output_audio.mp3').catch(() => {});
-                } catch (_) {}
-            }
-        }
+            let currentFile = null;
+            let ffmpeg = null;
+            const { createFFmpeg, fetchFile } = FFmpeg;
 
-        // ── Handle file selection ──
-        function handleFile(file) {
-            // Validate
-            if (!file) return;
-
-            if (!file.type.startsWith('video/') && !file.name.match(/\.(mp4|mov|webm|avi|mkv|mpeg|mpg|ogg|ogv|3gp|flv|wmv|m4v|ts|mts|m2ts)$/i)) {
-                showError('Please select a valid video file (MP4, MOV, WebM, AVI, MKV, etc.).');
-                return;
+            // --- View Management ---
+            function showView(viewName) {
+                Object.values(views).forEach(v => v.classList.add('hide'));
+                views[viewName].classList.remove('hide');
             }
 
-            // Warn for very large files
-            if (file.size > 500 * 1024 * 1024) {
-                console.warn('Large file detected — conversion may be slow on mobile devices.');
+            function formatBytes(bytes, decimals = 2) {
+                if (bytes === 0) return '0 Bytes';
+                const k = 1024;
+                const dm = decimals < 0 ? 0 : decimals;
+                const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+                const i = Math.floor(Math.log(bytes) / Math.log(k));
+                return parseFloat((bytes / Math.pow(k, i)).toFixed(dm)) + ' ' + sizes[i];
             }
 
-            selectedFile = file;
-            fileNameEl.textContent = file.name;
-            fileMetaEl.textContent = `${formatFileSize(file.size)} · ${getFileTypeLabel(file)}`;
-            showOnly(fileInfoSection);
-            errorSection.classList.add('hidden');
-            successSection.classList.add('hidden');
-            progressSection.classList.add('hidden');
-        }
-
-        function showError(message) {
-            errorText.textContent = message;
-            showOnly(errorSection);
-            progressSection.classList.add('hidden');
-            successSection.classList.add('hidden');
-            isConverting = false;
-        }
-
-        // ── Event: Browse button ──
-        browseBtn.addEventListener('click', (e) => {
-            e.stopPropagation();
-            fileInput.click();
-        });
-
-        // ── Event: File input change ──
-        fileInput.addEventListener('change', () => {
-            const file = fileInput.files?.[0];
-            if (file) handleFile(file);
-        });
-
-        // ── Event: Upload zone click ──
-        uploadZone.addEventListener('click', (e) => {
-            if (e.target === browseBtn || browseBtn.contains(e.target)) return;
-            fileInput.click();
-        });
-
-        // ── Events: Drag and drop ──
-        uploadZone.addEventListener('dragover', (e) => {
-            e.preventDefault();
-            e.stopPropagation();
-            uploadZone.classList.add('drag-over');
-        });
-        uploadZone.addEventListener('dragleave', (e) => {
-            e.preventDefault();
-            e.stopPropagation();
-            uploadZone.classList.remove('drag-over');
-        });
-        uploadZone.addEventListener('drop', (e) => {
-            e.preventDefault();
-            e.stopPropagation();
-            uploadZone.classList.remove('drag-over');
-            const file = e.dataTransfer?.files?.[0];
-            if (file) handleFile(file);
-        });
-
-        // Touch events for mobile drag (some mobile browsers)
-        uploadZone.addEventListener('touchmove', (e) => {
-            // Allow default touch behavior; drag events may not fire on mobile
-        }, { passive: true });
-
-        // ── Event: Remove file ──
-        removeFileBtn.addEventListener('click', () => {
-            resetState();
-        });
-
-        // ── Event: Convert button ──
-        convertBtn.addEventListener('click', async () => {
-            if (!selectedFile || isConverting) return;
-            if (!ffmpegReady) {
-                showError('Audio engine is still loading. Please wait a moment and try again.');
-                return;
-            }
-
-            isConverting = true;
-            showOnly(fileInfoSection);
-            progressSection.classList.remove('hidden');
-            errorSection.classList.add('hidden');
-            successSection.classList.add('hidden');
-            progressBarFill.style.width = '0%';
-            progressPercent.textContent = '0%';
-            progressStatusText.textContent = 'Starting conversion…';
-            convertBtn.disabled = true;
-
-            const inputFileName = 'input_video';
-            const outputFileName = 'output_audio.mp3';
-
-            try {
-                // Write file to FFmpeg virtual filesystem
-                progressStatusText.textContent = 'Reading video file…';
-                progressBarFill.style.width = '5%';
-                progressPercent.textContent = '5%';
-
-                const fileData = await fetchFile(selectedFile);
-                await ffmpeg.writeFile(inputFileName, fileData);
-
-                progressStatusText.textContent = 'Converting to MP3…';
-                progressBarFill.style.width = '10%';
-                progressPercent.textContent = '10%';
-
-                // Set up progress listener
-                const onProgress = ({
-                    progress,
-                    time
-                }) => {
-                    // progress is 0-1
-                    const pct = Math.min(Math.round(progress * 100), 99);
-                    // Map 0-1 progress to 10-95% on our bar (we use 0-10 for setup, 95-100 for finalize)
-                    const mappedPct = 10 + Math.round(progress * 85);
-                    progressBarFill.style.width = `${mappedPct}%`;
-                    progressPercent.textContent = `${pct}%`;
-                    if (pct < 50) {
-                        progressStatusText.textContent = 'Converting to MP3…';
-                    } else if (pct < 90) {
-                        progressStatusText.textContent = 'Encoding audio…';
-                    } else {
-                        progressStatusText.textContent = 'Finalizing…';
-                    }
-                };
-
-                ffmpeg.on('progress', onProgress);
-
-                // Run conversion: strip video, encode to MP3 at 192kbps
-                await ffmpeg.exec([
-                    '-i', inputFileName,
-                    '-vn', // no video
-                    '-c:a', 'libmp3lame',
-                    '-b:a', '192k',
-                    '-q:a', '2',
-                    '-map', 'a',
-                    '-y', // overwrite
-                    outputFileName,
-                ]);
-
-                ffmpeg.off('progress', onProgress);
-
-                progressStatusText.textContent = 'Finalizing…';
-                progressBarFill.style.width = '96%';
-                progressPercent.textContent = '96%';
-
-                // Read output file
-                const outputData = await ffmpeg.readFile(outputFileName);
-                const blob = new Blob([outputData.buffer], { type: 'audio/mpeg' });
-
-                // Clean up old blob URL
-                if (convertedBlobUrl) URL.revokeObjectURL(convertedBlobUrl);
-                convertedBlobUrl = URL.createObjectURL(blob);
-
-                // Set up audio preview
-                audioPlayer.src = convertedBlobUrl;
-                audioPreview.classList.remove('hidden');
-
-                // Show success
-                progressBarFill.style.width = '100%';
-                progressPercent.textContent = '100%';
-                progressStatusText.textContent = 'Complete!';
-                successMeta.textContent =
-                    `MP3 · ${formatFileSize(blob.size)} · 192kbps · from "${selectedFile.name}"`;
-
-                // Brief delay so user sees 100%
-                await new Promise(r => setTimeout(r, 400));
-
-                showOnly(successSection);
-                progressSection.classList.add('hidden');
-
-                // Clean up virtual FS
-                try {
-                    await ffmpeg.deleteFile(inputFileName);
-                    await ffmpeg.deleteFile(outputFileName);
-                } catch (_) {}
-
-            } catch (err) {
-                console.error('Conversion error:', err);
-                const message = err.message || 'An unexpected error occurred during conversion.';
-                if (message.includes('SharedArrayBuffer') || message.includes('cross-origin')) {
-                    showError(
-                        'This browser requires cross-origin isolation for the audio engine. Please try a different browser (Chrome or Edge recommended) or ensure the page is served over HTTPS.'
-                        );
-                } else if (message.includes('out of memory') || message.includes('memory')) {
-                    showError('The video file is too large for browser-based conversion. Please try a smaller file (< 200MB recommended).');
-                } else {
-                    showError(`Conversion failed: ${message}`);
-                }
-                // Clean up on error too
-                try {
-                    await ffmpeg.deleteFile(inputFileName).catch(() => {});
-                    await ffmpeg.deleteFile(outputFileName).catch(() => {});
-                } catch (_) {}
-                progressSection.classList.add('hidden');
-            } finally {
-                isConverting = false;
-                convertBtn.disabled = false;
-            }
-        });
-
-        // ── Event: Download button ──
-        downloadBtn.addEventListener('click', () => {
-            if (!convertedBlobUrl) return;
-            const a = document.createElement('a');
-            a.href = convertedBlobUrl;
-            // Derive filename from original
-            const originalName = selectedFile?.name || 'video';
-            const baseName = originalName.replace(/\.[^.]+$/, '');
-            a.download = `${baseName || 'audio'}_AudioMint.mp3`;
-            document.body.appendChild(a);
-            a.click();
-            document.body.removeChild(a);
-        });
-
-        // ── Event: Convert another ──
-        convertAnotherBtn.addEventListener('click', () => {
-            resetState();
-        });
-
-        // ── Event: Retry ──
-        retryBtn.addEventListener('click', () => {
-            if (selectedFile) {
-                showOnly(fileInfoSection);
-                errorSection.classList.add('hidden');
-                convertBtn.click();
-            } else {
-                resetState();
-            }
-        });
-
-        // ── Keyboard accessibility for upload zone ──
-        uploadZone.addEventListener('keydown', (e) => {
-            if (e.key === 'Enter' || e.key === ' ') {
+            // --- Drag & Drop Handlers ---
+            els.dropzone.addEventListener('dragover', (e) => {
                 e.preventDefault();
-                fileInput.click();
-            }
-        });
+                els.dropzone.classList.add('active');
+            });
 
-        // ── Global: Handle paste events ──
-        document.addEventListener('paste', (e) => {
-            const items = e.clipboardData?.items;
-            if (!items) return;
-            for (const item of items) {
-                if (item.kind === 'file' && item.type.startsWith('video/')) {
-                    e.preventDefault();
-                    const file = item.getAsFile();
-                    if (file) handleFile(file);
+            els.dropzone.addEventListener('dragleave', () => {
+                els.dropzone.classList.remove('active');
+            });
+
+            els.dropzone.addEventListener('drop', (e) => {
+                e.preventDefault();
+                els.dropzone.classList.remove('active');
+                if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
+                    handleFile(e.dataTransfer.files[0]);
+                }
+            });
+
+            els.fileInput.addEventListener('change', (e) => {
+                if (e.target.files && e.target.files.length > 0) {
+                    handleFile(e.target.files[0]);
+                }
+            });
+
+            // --- File Handling ---
+            function handleFile(file) {
+                if (!file.type.startsWith('video/')) {
+                    showError("Please select a valid video file.");
                     return;
                 }
+                
+                currentFile = file;
+                els.selFilename.textContent = file.name;
+                els.selFilesize.textContent = `${formatBytes(file.size)} • Ready to extract`;
+                showView('selected');
             }
-        });
 
-        console.log('🎵 AudioMint ready — drop a video file to get started.');
+            els.btnRemove.addEventListener('click', resetApp);
+            els.btnReset.addEventListener('click', resetApp);
+            els.btnErrorReset.addEventListener('click', resetApp);
+
+            function resetApp() {
+                currentFile = null;
+                els.fileInput.value = '';
+                // Revoke old object URL if it exists to free memory
+                if (els.btnDownload.href && els.btnDownload.href.startsWith('blob:')) {
+                    URL.revokeObjectURL(els.btnDownload.href);
+                }
+                showView('upload');
+            }
+
+            function showError(msg) {
+                els.errorMsg.textContent = msg;
+                showView('error');
+            }
+
+            // --- FFmpeg Engine Logic ---
+            async function initFFmpeg() {
+                if (ffmpeg === null) {
+                    els.convSubstatus.textContent = "Loading WebAssembly core... (First time only)";
+                    ffmpeg = createFFmpeg({ log: true });
+                    
+                    ffmpeg.setProgress(({ ratio }) => {
+                        const percent = Math.min(Math.max(Math.round(ratio * 100), 0), 100);
+                        els.convProgress.style.width = `${percent}%`;
+                        els.convPercent.textContent = `${percent}%`;
+                        
+                        if (percent > 0 && percent < 100) {
+                            els.convStatus.textContent = "Extracting Audio...";
+                            els.convSubstatus.textContent = "Processing frames directly in your browser";
+                        }
+                    });
+
+                    await ffmpeg.load();
+                }
+            }
+
+            els.btnConvert.addEventListener('click', async () => {
+                if (!currentFile) return;
+
+                showView('converting');
+                els.convProgress.style.width = '0%';
+                els.convPercent.textContent = '0%';
+                els.convStatus.textContent = "Initializing Engine...";
+                els.convSubstatus.textContent = "Preparing processing environment";
+
+                try {
+                    // 1. Initialize
+                    await initFFmpeg();
+
+                    // 2. Prepare File System
+                    const inputExt = currentFile.name.split('.').pop() || 'mp4';
+                    const inputName = `input.${inputExt}`;
+                    const outputName = 'output.mp3';
+
+                    els.convStatus.textContent = "Loading file into memory...";
+                    els.convSubstatus.textContent = "This might take a moment for larger files";
+                    ffmpeg.FS('writeFile', inputName, await fetchFile(currentFile));
+
+                    // 3. Execute Command
+                    els.convStatus.textContent = "Starting conversion...";
+                    // -vn: no video. -ar: audio sampling rate. -ac: audio channels. -b:a: audio bitrate
+                    await ffmpeg.run('-i', inputName, '-vn', '-ar', '44100', '-ac', '2', '-b:a', '192k', outputName);
+
+                    // 4. Retrieve Output
+                    els.convStatus.textContent = "Finalizing file...";
+                    const data = ffmpeg.FS('readFile', outputName);
+
+                    // 5. Cleanup memory
+                    ffmpeg.FS('unlink', inputName);
+                    ffmpeg.FS('unlink', outputName);
+
+                    // 6. Create Downloadable Blob
+                    const blob = new Blob([data.buffer], { type: 'audio/mp3' });
+                    const url = URL.createObjectURL(blob);
+                    
+                    // 7. Update UI
+                    const originalName = currentFile.name.replace(/\.[^/.]+$/, "");
+                    els.btnDownload.href = url;
+                    els.btnDownload.download = `${originalName}_audiomint.mp3`;
+                    
+                    showView('success');
+
+                } catch (error) {
+                    console.error(error);
+                    showError("Conversion failed. Your browser might be blocking SharedArrayBuffer for security reasons, or the file format is unsupported.");
+                }
+            });
+        });
     </script>
 </body>
 </html>
