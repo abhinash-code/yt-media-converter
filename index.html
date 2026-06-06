@@ -14,7 +14,8 @@
     <script src="https://cdn.tailwindcss.com"></script>
     
     <!-- FFmpeg WASM -->
-    <script src="https://cdn.jsdelivr.net/npm/@ffmpeg/ffmpeg@0.11.6/dist/ffmpeg.min.js"></script>
+    <script src="https://unpkg.com/@ffmpeg/ffmpeg@0.12.10/dist/umd/ffmpeg.js"></script>
+    <script src="https://unpkg.com/@ffmpeg/util@0.12.1/dist/umd/index.js"></script>
 
     <script>
         tailwind.config = {
@@ -349,7 +350,8 @@
 
             let currentFile = null;
             let ffmpeg = null;
-            const { createFFmpeg, fetchFile } = FFmpeg;
+            const { FFmpeg } = window.FFmpeg;
+            const { fetchFile } = window.FFmpegUtil;
 
             // --- View Management ---
             function showView(viewName) {
@@ -426,10 +428,10 @@
             async function initFFmpeg() {
                 if (ffmpeg === null) {
                     els.convSubstatus.textContent = "Loading WebAssembly core... (First time only)";
-                    ffmpeg = createFFmpeg({ log: true });
+                    ffmpeg = new FFmpeg();
                     
-                    ffmpeg.setProgress(({ ratio }) => {
-                        const percent = Math.min(Math.max(Math.round(ratio * 100), 0), 100);
+                    ffmpeg.on('progress', ({ progress }) => {
+                        const percent = Math.min(Math.max(Math.round(progress * 100), 0), 100);
                         els.convProgress.style.width = `${percent}%`;
                         els.convPercent.textContent = `${percent}%`;
                         
@@ -439,7 +441,11 @@
                         }
                     });
 
-                    await ffmpeg.load();
+                    const baseURL = 'https://unpkg.com/@ffmpeg/core@0.12.6/dist/umd';
+                    await ffmpeg.load({
+                        coreURL: `${baseURL}/ffmpeg-core.js`,
+                        wasmURL: `${baseURL}/ffmpeg-core.wasm`,
+                    });
                 }
             }
 
@@ -463,20 +469,20 @@
 
                     els.convStatus.textContent = "Loading file into memory...";
                     els.convSubstatus.textContent = "This might take a moment for larger files";
-                    ffmpeg.FS('writeFile', inputName, await fetchFile(currentFile));
+                    await ffmpeg.writeFile(inputName, await fetchFile(currentFile));
 
                     // 3. Execute Command
                     els.convStatus.textContent = "Starting conversion...";
                     // -vn: no video. -ar: audio sampling rate. -ac: audio channels. -b:a: audio bitrate
-                    await ffmpeg.run('-i', inputName, '-vn', '-ar', '44100', '-ac', '2', '-b:a', '192k', outputName);
+                    await ffmpeg.exec(['-i', inputName, '-vn', '-ar', '44100', '-ac', '2', '-b:a', '192k', outputName]);
 
                     // 4. Retrieve Output
                     els.convStatus.textContent = "Finalizing file...";
-                    const data = ffmpeg.FS('readFile', outputName);
+                    const data = await ffmpeg.readFile(outputName);
 
                     // 5. Cleanup memory
-                    ffmpeg.FS('unlink', inputName);
-                    ffmpeg.FS('unlink', outputName);
+                    await ffmpeg.deleteFile(inputName);
+                    await ffmpeg.deleteFile(outputName);
 
                     // 6. Create Downloadable Blob
                     const blob = new Blob([data.buffer], { type: 'audio/mp3' });
@@ -491,7 +497,7 @@
 
                 } catch (error) {
                     console.error(error);
-                    showError("Conversion failed. Your browser might be blocking SharedArrayBuffer for security reasons, or the file format is unsupported.");
+                    showError("Conversion failed. The file format is unsupported or your browser ran out of memory.");
                 }
             });
         });
